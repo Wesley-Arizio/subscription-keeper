@@ -20,7 +20,7 @@ Early. The design is settled and the v0 build is next: a single-instance daemon 
 
 ## Design
 
-Full architecture, data model, failure handling, and open trade-offs live in [`DESIGN.md`](./DESIGN.md).
+Full architecture, data model, failure handling, and open trade-offs live in [`design.md`](./design.md).
 
 ## License
 

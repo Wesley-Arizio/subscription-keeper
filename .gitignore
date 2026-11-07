@@ -1,0 +1,8 @@
+/target
+.env
+# Local, non-example config
+/config/keeper.toml
+# Keypairs / secrets
+/keys/
+*-keypair.json
+.DS_Store

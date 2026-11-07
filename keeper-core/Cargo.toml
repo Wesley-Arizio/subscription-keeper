@@ -1,0 +1,13 @@
+[package]
+name = "keeper-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = "1.0.104"
+dotenvy = "0.15.7"
+solana-commitment-config = "3.1.1"
+solana-rpc-client = "4.3.2"
+sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls"] }
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1.44"
