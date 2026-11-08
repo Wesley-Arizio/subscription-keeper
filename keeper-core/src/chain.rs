@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
 use solana_commitment_config::CommitmentConfig;
+use solana_pubkey::Pubkey;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 
 use crate::config::RpcConfig;
-
 
 pub struct ChainClient {
     rpc: RpcClient,
@@ -34,6 +34,14 @@ impl ChainClient {
             version: version.solana_core,
             slot,
         })
+    }
+
+    /// Fetch the raw data of an account owned by any program.
+    pub async fn get_account_data(&self, address: &Pubkey) -> Result<Vec<u8>> {
+        self.rpc
+            .get_account_data(address)
+            .await
+            .with_context(|| format!("rpc get_account_data {address}"))
     }
 
     pub fn rpc(&self) -> &RpcClient {

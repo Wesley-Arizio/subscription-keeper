@@ -23,8 +23,7 @@ impl Config {
     pub fn from_env() -> Result<Self> {
         dotenvy::dotenv().ok();
 
-        let database_url =
-            std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
+        let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
         let rpc_url = std::env::var("KEEPER_RPC_URL")
             .unwrap_or_else(|_| "https://api.devnet.solana.com".to_string());
         let rpc_commitment =

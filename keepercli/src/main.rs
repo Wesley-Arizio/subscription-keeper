@@ -1,11 +1,12 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use keeper_core::{chain::ChainClient, config::Config, db};
+use keeper_core::{accounts::ProgramAccount, chain::ChainClient, config::Config, db};
+use solana_pubkey::Pubkey;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
-#[command(name = "keepercli", version, about = "subscription-keeper daemon")]
+#[command(name = "keepercli", version, about = "subscription-keeper keeper")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -15,7 +16,12 @@ struct Cli {
 enum Command {
     /// Verify configuration and connectivity to the RPC and database.
     Check,
-    /// Run the keeper daemon.
+    /// Fetch an on-chain account and decode it as a Subscriptions program account.
+    Inspect {
+        /// Base-58 address of the account to fetch.
+        address: String,
+    },
+    /// Run the keeper.
     Run,
 }
 
@@ -32,8 +38,21 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Command::Check => check(&cfg).await,
+        Command::Inspect { address } => inspect(&cfg, &address).await,
         Command::Run => anyhow::bail!("`run` is not implemented yet"),
     }
+}
+
+async fn inspect(cfg: &Config, address: &str) -> Result<()> {
+    let address: Pubkey = address.parse().context("invalid base-58 address")?;
+    let chain = ChainClient::new(&cfg.rpc);
+
+    let data = chain.get_account_data(&address).await?;
+    let account = ProgramAccount::decode(&data)?;
+
+    info!(%address, bytes = data.len(), "fetched account");
+    info!("{account:#?}");
+    Ok(())
 }
 
 async fn check(cfg: &Config) -> Result<()> {

@@ -11,6 +11,7 @@ path = "src/main.rs"
 anyhow = "1.0.104"
 clap = { version = "4.6.7", features = ["derive"] }
 keeper-core = { version = "0.0.0", path = "../keeper-core" }
+solana-pubkey = "3.0.0"
 tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }

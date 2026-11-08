@@ -6,8 +6,11 @@ edition.workspace = true
 [dependencies]
 anyhow = "1.0.104"
 dotenvy = "0.15.7"
+num-traits = "0.2.19"
 solana-commitment-config = "3.1.1"
-solana-rpc-client = "4.3.2"
+solana-pubkey = "3.0.0"
+solana-rpc-client = "3.1.14"
+subscriptions = "0.5.0"
 sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls"] }
 tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1.44"
