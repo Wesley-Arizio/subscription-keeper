@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use keeper_core::{accounts::ProgramAccount, chain::ChainClient, config::Config, db};
+use keeper_core::{accounts::ProgramAccount, chain::ChainClient, charge, config::Config, db};
 use solana_pubkey::Pubkey;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
@@ -21,6 +21,11 @@ enum Command {
         /// Base-58 address of the account to fetch.
         address: String,
     },
+    /// Charge the current period of one subscription.
+    Pull {
+        /// Base-58 address of the subscription to charge.
+        address: String,
+    },
     /// Run the keeper.
     Run,
 }
@@ -39,8 +44,23 @@ async fn main() -> Result<()> {
     match cli.command {
         Command::Check => check(&cfg).await,
         Command::Inspect { address } => inspect(&cfg, &address).await,
+        Command::Pull { address } => pull(&cfg, &address).await,
         Command::Run => anyhow::bail!("`run` is not implemented yet"),
     }
+}
+
+async fn pull(cfg: &Config, address: &str) -> Result<()> {
+    let subscription: Pubkey = address.parse().context("invalid subscription address")?;
+    let chain = ChainClient::new(&cfg.rpc);
+
+    let result =
+        charge::charge_subscription(&chain, &cfg.signer.keypair_path, &subscription).await?;
+    info!(signature = %result.signature, amount = result.amount, "charge confirmed");
+
+    // Re-read the subscription to show the period being recorded on-chain.
+    let data = chain.get_account_data(&subscription).await?;
+    info!("{:#?}", ProgramAccount::decode(&data)?);
+    Ok(())
 }
 
 async fn inspect(cfg: &Config, address: &str) -> Result<()> {

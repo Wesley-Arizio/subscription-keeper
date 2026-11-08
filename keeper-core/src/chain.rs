@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use solana_account::Account;
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
@@ -42,6 +43,14 @@ impl ChainClient {
             .get_account_data(address)
             .await
             .with_context(|| format!("rpc get_account_data {address}"))
+    }
+
+    /// Fetch a full account, including its owning program.
+    pub async fn get_account(&self, address: &Pubkey) -> Result<Account> {
+        self.rpc
+            .get_account(address)
+            .await
+            .with_context(|| format!("rpc get_account {address}"))
     }
 
     pub fn rpc(&self) -> &RpcClient {
