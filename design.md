@@ -32,7 +32,7 @@ The worst a compromised puller key can do is trigger a legitimate, in-cap charge
 
 The sync worker reads chain state; only the submitter writes to it. Everything in between is local decision-making.
 
-**Sync worker.** Reconciles program accounts (plans, delegations, subscriptions) into local state. Detects new subscribers, cancellations, plan changes. The chain is truth for what is authorized; the local store is truth for what has been attempted.
+**Sync worker.** Reconciles the plans it is configured to watch and the subscriptions attached to them into local state, decoding each into a common billing position: payer, puller, mint, amount per period, period length, period anchor, amount already pulled this period, and expiry. Detects new subscribers, cancellations, and plan changes. Everything downstream operates on the billing position, not on the account shape it was decoded from, so supporting another authorization shape is a decoding concern rather than an engine change. The chain is truth for what is authorized; the local store is truth for what has been attempted.
 
 **Scheduler.** Decides what is due now, emits work items, and leases them so two instances cannot charge the same period.
 
@@ -87,17 +87,17 @@ Each is a deliberate trade-off with a default already chosen; the Phase 0 spike 
 
 **1. Signer custody in hosted mode.** Local keypair for self-host is settled. For the hosted path, whether the puller key lives in KMS or an external signer service changes the deployment story but not the engine. Defer the choice, keep the interface.
 
-**2. RPC strategy.** Polling program accounts versus subscribing to logs. Polling is simpler and survives dropped sockets; subscriptions cut latency. Latency does not matter much for monthly billing, which argues for polling in v0.
+**2. RPC strategy.** Refreshing the state of known subscriptions is done by polling: it is simpler, survives dropped sockets, and latency does not matter much for monthly billing. Discovering new subscribers is a separate problem, because a subscription stores its plan only as a PDA seed, not as a field in its account data, so subscribers cannot be found by filtering program accounts on the plan. New subscribers are discovered from the program's subscribe event, or by deriving the subscription PDA from the plan and a known subscriber; their state is polled thereafter.
 
 ## MVP scope
 
 v0 proves one thing: the engine reliably triggers pulls against the real program and survives failures. Everything else waits.
 
-**In scope.** Single instance, no leasing. Postgres. CLI daemon with a config file and a local keypair. Recurring delegations only. Sync worker, scheduler, pre-flight checker, submitter, classifier, dunning state machine, plain POST webhooks. Devnet.
+**In scope.** Single instance, no leasing. Postgres. CLI daemon configured by environment and a local keypair. Merchant-plan subscriptions only: a published plan and the subscriptions attached to it. Sync worker, scheduler, pre-flight checker, submitter, classifier, dunning state machine, plain POST webhooks. Devnet.
 
 The dunning logic stays in v0 even though it is the largest piece, because it *is* the differentiator. A keeper without it is a cron job.
 
-**Out of scope.** Hosted API, dashboard, multi-tenancy, KMS and external signers, high availability and leasing, allowances and merchant-plan flows, Token-2022 extension edge cases, notification templates, mainnet.
+**Out of scope.** Hosted API, dashboard, multi-tenancy, KMS and external signers, high availability and leasing, allowances and direct recurring delegations, Token-2022 extension edge cases, notification templates, mainnet.
 
 **Proof of work.** The deliverable that matters most is the forced-failure harness: set up a subscription on devnet, deliberately freeze or empty the subscriber's token account mid-cycle, and show the engine detect it, classify it as hard, skip pointless retries, and move the subscription into dunning with a grace window, rather than looping or double-charging on restart. A linked devnet transaction plus that failing-case test is stronger evidence than any write-up.
 
