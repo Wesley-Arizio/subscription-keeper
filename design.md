@@ -87,7 +87,7 @@ Each is a deliberate trade-off with a default already chosen; the Phase 0 spike 
 
 **1. Signer custody in hosted mode.** Local keypair for self-host is settled. For the hosted path, whether the puller key lives in KMS or an external signer service changes the deployment story but not the engine. Defer the choice, keep the interface.
 
-**2. RPC strategy.** Refreshing the state of known subscriptions is done by polling: it is simpler, survives dropped sockets, and latency does not matter much for monthly billing. Discovering new subscribers is a separate problem, because a subscription stores its plan only as a PDA seed, not as a field in its account data, so subscribers cannot be found by filtering program accounts on the plan. New subscribers are discovered from the program's subscribe event, or by deriving the subscription PDA from the plan and a known subscriber; their state is polled thereafter.
+**2. RPC strategy.** Both discovery and refresh are done by polling: it is simpler, survives dropped sockets, and latency does not matter much for monthly billing. A subscription records its plan in its account data — the delegation header's `delegatee` field holds the plan address — so every subscriber to a configured plan is found with one `getProgramAccounts` call filtered on that field, and each account's state is refreshed the same way. Subscribing to log/websocket notifications would cut latency but is not worth the added fragility here.
 
 ## MVP scope
 
